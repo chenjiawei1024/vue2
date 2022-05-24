@@ -2,6 +2,7 @@ import { inBrowser, isIE9 } from 'core/util/index'
 import { addClass, removeClass } from 'web/runtime/class-util'
 import { remove, extend, cached } from 'shared/util'
 
+// 判断并调用autoCssTransition
 export function resolveTransition(
   def?: string | Record<string, any>
 ): Record<string, any> | undefined {
@@ -9,6 +10,7 @@ export function resolveTransition(
     return
   }
   /* istanbul ignore else */
+  // 合并过渡类名和自定义过渡类名
   if (typeof def === 'object') {
     const res = {}
     if (def.css !== false) {
@@ -21,6 +23,7 @@ export function resolveTransition(
   }
 }
 
+// 通过 name 属性获取过渡 CSS 类名
 const autoCssTransition: (name: string) => Object = cached(name => {
   return {
     enterClass: `${name}-enter`,

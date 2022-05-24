@@ -16,24 +16,32 @@ import type { VNodeWithData } from 'typescript/vnode'
 import VNode from 'core/vdom/vnode'
 
 export function enter(vnode: VNodeWithData, toggleDisplay?: () => void) {
+  // 获取真实dom元素
   const el: any = vnode.elm
 
   // call leave callback now
+  // 如果元素存在_leaveCb函数，直接调用
+  // 设置el.leaveCb.cancelled为true
   if (isDef(el._leaveCb)) {
     el._leaveCb.cancelled = true
     el._leaveCb()
   }
 
+  // name - string. 用于自动生成css过渡类名
+  // 默认类名为"v"
+  // 如果有用户定义的类名会覆盖
   const data = resolveTransition(vnode.data.transition)
   if (isUndef(data)) {
     return
   }
 
   /* istanbul ignore if */
+  // 有_enterCb回调或者非元素节点直接结束
   if (isDef(el._enterCb) || el.nodeType !== 1) {
     return
   }
 
+  // 获取用户自定义的css名和一系列回调函数
   const {
     css,
     type,
@@ -58,19 +66,26 @@ export function enter(vnode: VNodeWithData, toggleDisplay?: () => void) {
   // transition. One edge case to check is when the <transition> is placed
   // as the root node of a child component. In that case we need to check
   // <transition>'s parent for appear check.
+
+  // activeInstance为全变量，为当前激活的组件，这里是transition组件
   let context = activeInstance
+  // 获取transition组件的占位符节点
   let transitionNode = activeInstance.$vnode
+  // 同transition组件hasParentTransition函数类似
+  // 一直获取到占位符节点的父组件（context）
   while (transitionNode && transitionNode.parent) {
     context = transitionNode.context
     transitionNode = transitionNode.parent
   }
 
+  // isAppear：是否为首次挂载
   const isAppear = !context._isMounted || !vnode.isRootInsert
-
+  // apper 默认为false，默认第一次渲染的时候不触发过度效果
   if (isAppear && !appear && appear !== '') {
     return
   }
 
+  // 解析Class名称以及回调函数
   const startClass = isAppear && appearClass ? appearClass : enterClass
   const activeClass =
     isAppear && appearActiveClass ? appearActiveClass : enterActiveClass
@@ -87,6 +102,7 @@ export function enter(vnode: VNodeWithData, toggleDisplay?: () => void) {
     ? appearCancelled || enterCancelled
     : enterCancelled
 
+  // 用户定义的延迟执行时间
   const explicitEnterDuration: any = toNumber(
     isObject(duration) ? duration.enter : duration
   )
@@ -95,9 +111,19 @@ export function enter(vnode: VNodeWithData, toggleDisplay?: () => void) {
     checkDuration(explicitEnterDuration, 'enter', vnode)
   }
 
+  // 是否使用css实现过渡动画，默认为true
   const expectsCSS = css !== false && !isIE9
+
+  // 根据enterHook参数数量，判断是否为用户控制过渡
+  // 参数为两个的时候表示用户想自己控制
   const userWantsControl = getHookArgumentsLength(enterHook)
 
+  // 定义el._enterCb回调函数，函数只执行一次（once）
+  //1.非用户控制过渡：transition/animation事件完成后执行回调；
+  // 2.非用户控制过渡：在定义的延迟时机后执行回调
+  // 3. 节点移除的时候如果el._enterCb!==null 执行回调
+  // 4. 与v-show有关，data.show为false/undefined时，在节点insert的时候执行回调
+  // 5. v-show为true的时候立刻执行回调
   const cb = (el._enterCb = once(() => {
     if (expectsCSS) {
       removeTransitionClass(el, toClass)

@@ -1,5 +1,7 @@
 // Provides transition support for a single element/component.
 // supports transition mode (out-in / in-out)
+//为单个元素/组件提供转换支持。 
+//支持过渡模式(out-in / in-out)
 
 import { warn } from 'core/util/index'
 import { camelize, extend, isPrimitive } from 'shared/util'
@@ -87,19 +89,24 @@ export default {
   abstract: true,
 
   render(h: Function) {
+    // 利用slot的default 获取子节点
     let children: any = this.$slots.default
+    // 子节点不存在则返回
     if (!children) {
       return
     }
 
     // filter out text nodes (possible whitespaces)
+    // 过滤文本节点(可能的空白)
     children = children.filter(isNotTextNode)
     /* istanbul ignore if */
+    //过滤之后不存在子节点直接返回
     if (!children.length) {
       return
     }
 
     // warn multiple elements
+    // 警告多个元素
     if (__DEV__ && children.length > 1) {
       warn(
         '<transition> can only be used on a single element. Use ' +
@@ -111,6 +118,7 @@ export default {
     const mode: string = this.mode
 
     // warn invalid mode
+    //警告无效的模式
     if (__DEV__ && mode && mode !== 'in-out' && mode !== 'out-in') {
       warn('invalid <transition> mode: ' + mode, this.$parent)
     }
@@ -119,18 +127,21 @@ export default {
 
     // if this is a component root node and the component's
     // parent container node also has transition, skip.
+    // 如果这是一个组件的根节点，并且该组件的父容器节点也有转换，请跳过。
     if (hasParentTransition(this.$vnode)) {
       return rawChild
     }
 
     // apply transition data to child
     // use getRealChild() to ignore abstract components e.g. keep-alive
+    // 使用getRealChild()忽略抽象组件
     const child = getRealChild(rawChild)
     /* istanbul ignore if */
     if (!child) {
       return rawChild
     }
 
+    //out-in模式下如果一个keep-alive 返回一个占位符
     if (this._leaving) {
       return placeholder(h, rawChild)
     }
@@ -138,6 +149,7 @@ export default {
     // ensure a key that is unique to the vnode type and to this transition
     // component instance. This key will be used to remove pending leaving nodes
     // during entering.
+    // 处理id和data
     const id: string = `__transition-${this._uid}-`
     child.key =
       child.key == null
@@ -157,6 +169,8 @@ export default {
 
     // mark v-show
     // so that the transition module can hand over the control to the directive
+    // 标记 v-show
+    // 这样过渡模块就可以把控制权交给指令
     if (child.data.directives && child.data.directives.some(isVShowDirective)) {
       child.data.show = true
     }
@@ -176,8 +190,10 @@ export default {
       // important for dynamic transitions!
       const oldData: Object = (oldChild.data.transition = extend({}, data))
       // handle transition mode
+      // 处理过渡模式
       if (mode === 'out-in') {
         // return placeholder node and queue update when leave finishes
+        // 当leave完成时返回占位符节点和队列的更新
         this._leaving = true
         mergeVNodeHook(oldData, 'afterLeave', () => {
           this._leaving = false
