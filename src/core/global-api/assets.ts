@@ -12,6 +12,7 @@ export function initAssetRegisters(Vue: GlobalAPI) {
       id: string,
       definition?: Function | Object
     ): Function | Object | void {
+      // 如果不存在definition，则视为获取（组件/指令/过滤器）,否则存入
       if (!definition) {
         return this.options[type + 's'][id]
       } else {
@@ -20,6 +21,8 @@ export function initAssetRegisters(Vue: GlobalAPI) {
           validateComponentName(id)
         }
         if (type === 'component' && isPlainObject(definition)) {
+          // 判断传入的definition参数是否是一个对象，如果是对象，则使用Vue.extend方法将其变为Vue的子类
+          // 如果definition对象中不存在name属性时，则使用组件id作为组件的name属性
           // @ts-expect-error
           definition.name = definition.name || id
           definition = this.options._base.extend(definition)
@@ -27,6 +30,7 @@ export function initAssetRegisters(Vue: GlobalAPI) {
         if (type === 'directive' && typeof definition === 'function') {
           definition = { bind: definition, update: definition }
         }
+        // 将注册好的组件保存在this.options['components']中
         this.options[type + 's'][id] = definition
         return definition
       }
