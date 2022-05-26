@@ -27,6 +27,8 @@ export function initAssetRegisters(Vue: GlobalAPI) {
           definition.name = definition.name || id
           definition = this.options._base.extend(definition)
         }
+        // 如果是函数，则默认监听bind和update两个事件，即将definition函数分别赋给bind和update两个属性
+        // 否则则认定为是用户自定义的指令对象，直接存入this.options['directives']中
         if (type === 'directive' && typeof definition === 'function') {
           definition = { bind: definition, update: definition }
         }

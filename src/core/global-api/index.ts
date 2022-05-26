@@ -61,8 +61,11 @@ export function initGlobalAPI(Vue: GlobalAPI) {
 
   extend(Vue.options.components, builtInComponents)
 
+  // 初始化全局方法
   initUse(Vue)
   initMixin(Vue)
+  // 初始化vue.extends,用于构建vue子类(vueComponent)
   initExtend(Vue)
+  // 初始化 vue.component, vue.filter, vue.derective
   initAssetRegisters(Vue)
 }
