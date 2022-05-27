@@ -7,10 +7,14 @@ import { isIE, isIOS, isNative } from './env'
 export let isUsingMicroTask = false
 
 const callbacks: Array<Function> = []
+// 运用异步锁的概念，保证同一时刻任务队列中只有一个 flushCallbacks
+// 当 pengding 为 false 的时候，表示浏览器任务队列中没有 flushCallbacks 函数；
+// 当 pengding 为 true 的时候，表示浏览器任务队列中已经放入 flushCallbacks
 let pending = false
 
 function flushCallbacks() {
   pending = false
+  // 这里的copies原理跟广度优先搜索一样。
   const copies = callbacks.slice(0)
   callbacks.length = 0
   for (let i = 0; i < copies.length; i++) {
@@ -29,6 +33,8 @@ function flushCallbacks() {
 // where microtasks have too high a priority and fire in between supposedly
 // sequential events (e.g. #4521, #6690, which have workarounds)
 // or even between bubbling of the same event (#6566).
+
+// 执行timerFunc其实就相当于将flushCallbacks包了一层一步去执行,即flushCallbacks作为回调函数去触发。
 let timerFunc
 
 // The nextTick behavior leverages the microtask queue, which can be accessed
@@ -49,6 +55,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     // "force" the microtask queue to be flushed by adding an empty timer.
     if (isIOS) setTimeout(noop)
   }
+  // 置使用微任务符为true
   isUsingMicroTask = true
 } else if (
   !isIE &&
@@ -87,6 +94,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick(cb?: Function, ctx?: Object) {
   let _resolve
+  // 往全局的callbacks队列中添加cb
   callbacks.push(() => {
     if (cb) {
       try {
@@ -100,9 +108,11 @@ export function nextTick(cb?: Function, ctx?: Object) {
   })
   if (!pending) {
     pending = true
+    // 执行timerFunc，在下一个Tick中执行callbacks中的所有cb
     timerFunc()
   }
   // $flow-disable-line
+  // 如果没有提供回调，并且支持Promise，返回一个Promise
   if (!cb && typeof Promise !== 'undefined') {
     return new Promise(resolve => {
       _resolve = resolve

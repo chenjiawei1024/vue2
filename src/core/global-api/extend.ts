@@ -29,7 +29,7 @@ export function initExtend(Vue: GlobalAPI) {
       return cachedCtors[SuperId]
     }
 
-    // 获取name属性 （如果子类有，则获取子嘞name，没有则获取父类的，并且在开发环境下校验name字段是否合法）
+    // 获取name属性 （如果子类有，则获取子类name，没有则获取父类的，并且在开发环境下校验name字段是否合法）
     const name = extendOptions.name || Super.options.name
     if (__DEV__ && name) {
       validateComponentName(name)
